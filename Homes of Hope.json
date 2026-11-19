@@ -1,0 +1,3741 @@
+{
+  "name": "TecBot - ITT (Homes of Hope Adaptado)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalize Data').item.json.instance.server_url }}/chat/getBase64FromMediaMessage/{{ $('Normalize Data').item.json.instance.name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Normalize Data').item.json.instance.apikey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message.key.id",
+              "value": "={{ $('Normalize Data').item.json.message.id }}"
+            },
+            {
+              "name": "convertToMp4",
+              "value": "={{ Boolean(false) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        464
+      ],
+      "id": "e5da57d0-0de1-47a5-b7f7-fed3e7ef3bbf",
+      "name": "Get Audio"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {
+          "mimeType": "={{ $json.mimetype }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2432,
+        464
+      ],
+      "id": "9edd064d-d147-4b80-a585-3516b977a474",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e302c68-ce44-430e-a432-6a14a598ab97",
+              "name": "content",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "bc42849c-4998-4721-bcac-997218a010e6",
+              "name": "timestamp",
+              "value": "={{ $('Parse to JSON').item.json.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        464
+      ],
+      "id": "8078b93a-fd0d-4371-845b-e2e8752f5add",
+      "name": "Audio Content"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Normalize Data').item.json.message.chat_id }}-buffer",
+        "messageData": "={{ $('Normalize Data').item.json.message.toJsonString() }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        640,
+        816
+      ],
+      "id": "8c785135-a471-44cc-add8-76594117d159",
+      "name": "Push Message Buffer",
+      "credentials": {
+        "redis": {
+          "id": "K4syZzERbjXvKE7u",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "message",
+        "key": "={{ $('Normalize Data').item.json.message.chat_id }}-buffer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        864,
+        816
+      ],
+      "id": "0ce2298d-b9ec-47be-9660-597931b3f850",
+      "name": "Get Message Buffer",
+      "credentials": {
+        "redis": {
+          "id": "K4syZzERbjXvKE7u",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Normalize Data').item.json.message.chat_id }}-buffer"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        688
+      ],
+      "id": "6874c467-f639-485b-894c-c31fce46684f",
+      "name": "Delete Message Buffer",
+      "credentials": {
+        "redis": {
+          "id": "K4syZzERbjXvKE7u",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b94448cb-e3d1-42bb-a59f-a7d944820506",
+              "name": "instance.server_url",
+              "value": "={{ $json.body.server_url || 'https://evo.naviheylisten.is-a.dev' }}",
+              "type": "string"
+            },
+            {
+              "id": "a11448cb-e3d1-42bb-a59f-a7d944820507",
+              "name": "instance.name",
+              "value": "={{ $json.body.instance || 'tecbot' }}",
+              "type": "string"
+            },
+            {
+              "id": "f9da92bc-0110-4ed3-868a-aa5ce350b343",
+              "name": "instance.apikey",
+              "value": "={{ $json.body.apikey || 'EVOLUTION_API_KEY' }}",
+              "type": "string"
+            },
+            {
+              "id": "f79a2276-9699-4cec-8910-046c661b65d1",
+              "name": "message.id",
+              "value": "={{ $json.body.data?.key?.id || $json.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "06227ad9-167f-4610-846c-0e5395c6e0b3",
+              "name": "message.chat_id",
+              "value": "={{ ($json.body.data?.key?.remoteJid || $json.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.from || '').replace('@s.whatsapp.net', '') }}",
+              "type": "string"
+            },
+            {
+              "id": "af064713-e38d-4ffb-845b-280e45b68ec8",
+              "name": "message.content_type",
+              "value": "={{ $json.body.data?.messageType === 'conversation' || $json.body.data?.messageType === 'extendedTextMessage' ? 'text' : ($json.body.data?.messageType === 'audioMessage' ? 'audio' : ($json.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.type || 'text')) }}",
+              "type": "string"
+            },
+            {
+              "id": "573b6cbd-16bb-449a-a991-e281d0edd402",
+              "name": "message.content",
+              "value": "={{ $json.body.data?.message?.conversation || $json.body.data?.message?.extendedTextMessage?.text || $json.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.text?.body || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "fc0a7175-895e-4ff7-97c1-c25fcf7fa09b",
+              "name": "message.timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "b0f9931b-1454-40a2-a336-c9f012acde1b",
+              "name": "user.name",
+              "value": "={{ $json.body.data?.pushName || $json.body.entry?.[0]?.changes?.[0]?.value?.contacts?.[0]?.profile?.name || 'Estudiante ITT' }}",
+              "type": "string"
+            },
+            {
+              "id": "2e044aa7-f5c5-414f-acd0-0a812a39036c",
+              "name": "api.url",
+              "value": "=https://8e07-2605-59c8-32ba-d08-89cf-60e9-c00b-b683.ngrok-free.app/api/bot",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        816
+      ],
+      "id": "0fdd57c9-0e34-42b0-8156-a89fa34fa40a",
+      "name": "Normalize Data"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ JSON.parse($json.message.last()).id }}",
+                    "rightValue": "={{ $('Normalize Data').item.json.message.id }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "id": "2d92f626-3cb4-4cbe-8b28-be5cf2574f26"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Do nothing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0cae3e7a-252a-423f-aa17-7200cfe84e76",
+                    "leftValue": "={{ JSON.parse($json.message.last()).timestamp }}",
+                    "rightValue": "={{ $now.minus(5, 'seconds').toLocal() }}",
+                    "operator": {
+                      "type": "dateTime",
+                      "operation": "before"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Continue"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Wait"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1088,
+        624
+      ],
+      "id": "8df28c16-9d6e-46ac-8c06-0d8335a4dd84",
+      "name": "Message Buffer Switch"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        912
+      ],
+      "id": "16e2650c-edf1-455f-b4b5-b0bb18b73591",
+      "name": "Message Wait",
+      "webhookId": "e6c39bff-c5fc-46f8-8215-c7ae04cddfc5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        496
+      ],
+      "id": "bc041e73-aeef-474e-b468-a14405884c2d",
+      "name": "Ignore the Workflow"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "message",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        688
+      ],
+      "id": "800ca9ee-5ae4-47e5-ab22-dd0370d2e27b",
+      "name": "Split Messages"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.parse($json.message) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        688
+      ],
+      "id": "d5032baf-5bea-45fc-8ebe-fdf13ec32aaf",
+      "name": "Parse to JSON"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "audio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f804680b-7c9c-4bbd-b7f5-3fed5e240018"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6cac17d3-7f33-46f6-b144-06299c4c154e",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "127a165c-cd6f-49ec-b591-4e10db163cc8",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "location",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Location"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "499f8d66-9725-4cb9-b9e2-b10e6a609e31",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "file",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "File"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6550846e-a976-4f91-ac98-650416d83755",
+                    "leftValue": "={{ $json.content_type }}",
+                    "rightValue": "=sticker",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sticker"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Other Type"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1984,
+        624
+      ],
+      "id": "942dcbbd-dae2-466c-822d-fdfae7907f11",
+      "name": "Message Type Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c9b5d18-6681-490c-b5d5-b1ac56185389",
+              "name": "content",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "4e8b1f88-4ff5-40cb-a714-8a1a3bc3e695",
+              "name": "timestamp",
+              "value": "={{ $('Parse to JSON').item.json.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        656
+      ],
+      "id": "b4faa3d2-7a43-42e6-a4f7-496cbeb2c278",
+      "name": "Normal Message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6c9b5d18-6681-490c-b5d5-b1ac56185389",
+              "name": "content",
+              "value": "=Un sticker, iamgen, o documento",
+              "type": "string"
+            },
+            {
+              "id": "4e8b1f88-4ff5-40cb-a714-8a1a3bc3e695",
+              "name": "timestamp",
+              "value": "={{ $('Parse to JSON').item.json.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        848
+      ],
+      "id": "97d169d2-a5ab-4ba2-91ae-7105cb0e740b",
+      "name": "Not Supported Message"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3104,
+        640
+      ],
+      "id": "bd4b201a-989b-4af0-bfb1-850f2c486b44",
+      "name": "Merge Messages"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "timestamp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        656
+      ],
+      "id": "35e50550-e1f8-4c4b-9310-1cbf4710aa06",
+      "name": "Sort Messages"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "content",
+              "renameField": true,
+              "outputFieldName": "messages"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        656
+      ],
+      "id": "625d26a7-4303-468e-82be-e4be32c8e95f",
+      "name": "Aggregate Messages"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalize Data').item.json.api.url }}/messages",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation_id",
+              "value": "={{ $('Get Conversation Status').item.json.id }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $('Normalize Data').item.json.message.chat_id }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Sort Messages').item.json.content }}"
+            },
+            {
+              "name": "role",
+              "value": "user"
+            },
+            {
+              "name": "name",
+              "value": "={{ $('Normalize Data').item.json.user.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3776,
+        656
+      ],
+      "id": "079d2a12-97a0-4a7f-b77e-cd2180cd9ac8",
+      "name": "Post User Message"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalize Data').item.json.api.url }}/messages/{{ $('Get Conversation Status').first().json.id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "15"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4224,
+        656
+      ],
+      "id": "93d29e78-0c6d-46f8-b4ad-dd8855b438ad",
+      "name": "Get Message History"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "specifiedFields",
+        "fieldsToInclude": "role, message",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4448,
+        656
+      ],
+      "id": "b835d998-ce50-490f-bebf-9c04b43dcbc1",
+      "name": "Merge Message History"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalize Data').item.json.api.url }}/conversations/{{ $('Normalize Data').item.json.message.chat_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "user_name",
+              "value": "={{ $('Normalize Data').item.json.user.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3552,
+        656
+      ],
+      "id": "44d66a58-8dde-42bf-b739-6c256b5eb540",
+      "name": "Get Conversation Status"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        -816
+      ],
+      "id": "4d9185bb-744e-4e70-8592-8a957791412b",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nk6fvMvvBWByXKRs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "homesofhope",
+          "mode": "list",
+          "cachedResultName": "homesofhope"
+        },
+        "options": {
+          "clearNamespace": true,
+          "pineconeNamespace": "Homes of Hope"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        -1040
+      ],
+      "id": "cbbe055f-ed9a-4909-a09f-885fb1e206cf",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "24FvPNmNfl62mluE",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalize Data').item.json.api.url }}/applicants/applicant-status/{{ $('Normalize Data').item.json.message.chat_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4672,
+        656
+      ],
+      "id": "05f94b32-43d2-4417-9c00-99a41086bbd7",
+      "name": "Get Applicant Status",
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc7fe506-73b0-4d58-a4fe-d4b0e2746cf8",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        816
+      ],
+      "id": "55bc07ca-5348-46f2-b572-07a195d15720",
+      "name": "If New Message"
+    },
+    {
+      "parameters": {
+        "dataToSave": {
+          "values": [
+            {
+              "key": "phoneNumber",
+              "value": "={{ $('Normalize Data').item.json.message.chat_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executionData",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        816
+      ],
+      "id": "0e489bd5-7c5b-43a3-8e05-ec5f7de20650",
+      "name": "Save Number"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        464
+      ],
+      "id": "3bae31bc-c768-4891-ac9f-088be28e18e8",
+      "name": "Transcribe a recording1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "caKDNEwqagn9sokD",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## ROLE & OBJECTIVE\nYou are the **Traffic Controller** for **TecBot (\"El ITT, conectado contigo\")**, the virtual assistant of the **Instituto Tecnológico de Tijuana (ITT)**.\nYour ONLY goal is to route the student to the right specialist tool, WAIT for their text response, and **OUTPUT that exact text** as your final answer to the student.\n\n## YOUR 2-STEP PROTOCOL (MUST FOLLOW)\n\n### STEP 1: ROUTE & EXECUTE\nAnalyze the `user_message` and student process context:\n- IF the student asks about the status of their personal process/trámite (\"¿Cómo va mi trámite?\", \"¿Cuál es mi estado?\", \"¿Qué me falta entregar?\", \"Mi número de control / matrícula es...\") -> Call `application_specialist`.\n- IF the student asks for general or institutional information (\"¿Cuáles son los requisitos de servicio social?\", \"¿Dónde está Servicios Escolares?\", \"Horarios\", \"Residencias profesionales\", greetings like \"Hola\") -> Call `information_specialist`.\n\n### STEP 2: PASSTHROUGH (The \"Finisher\")\n**CRITICAL:** Once the specialist tool returns a text message:\n1. **STOP THINKING.**\n2. **YOUR FINAL RESPONSE** must be that **exact text**.\n3. **THE SILENCE EXCEPTION:** If the specialist tool returns EXACTLY \"[SILENT_EXIT]\", output EXACTLY \"[SILENT_EXIT]\".\n4. **DO NOT** add introductions like \"The specialist says...\". Just output the raw message.\n5. **DO NOT** call the tool again.\n\n## INPUT VARIABLES (STUDENT CONTEXT)\n- **Student Name:** {{ $('Get Applicant Status').first().json.applicant_name || 'No registrado' }}\n- **Matrícula (Número de Control):** {{ $('Get Applicant Status').first().json.matricula || 'No vinculada' }}\n- **Process Type (Trámite):** {{ $('Get Applicant Status').first().json.process_type || 'Ninguno' }}\n- **Department:** {{ $('Get Applicant Status').first().json.department || 'N/A' }}\n- **Current Stage:** {{ $('Get Applicant Status').first().json.current_stage_name || 'N/A' }}\n- **Status:** {{ $('Get Applicant Status').first().json.status || 'NULL' }}\n- **Observations / Pending Actions:** {{ $('Get Applicant Status').first().json.observations || 'Ninguna' }}\n- **Current Date Time:** {{ $now }}\n",
+          "maxIterations": 3,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        6432,
+        656
+      ],
+      "id": "2a943251-deae-4ce2-9a7d-ee3da771e6b6",
+      "name": "Supervisor",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5392,
+        880
+      ],
+      "id": "5aeba336-e079-400f-92f1-274baf2050f5",
+      "name": "Supervisor Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5344,
+        1088
+      ],
+      "id": "65ba55e8-d35b-4e44-8ecf-153bafbf0383",
+      "name": "Applicant Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Normalize Data').item.json.api.url }}/applicants/applicant-status/{{ $('Normalize Data').item.json.message.chat_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4896,
+        656
+      ],
+      "id": "c126f18b-a42e-4027-943e-9a3530f7b161",
+      "name": "Get Current Question1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6240,
+        1088
+      ],
+      "id": "cc95bae9-4fa4-48ec-a0a7-8447028f1416",
+      "name": "Information Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6704,
+        1296
+      ],
+      "id": "3c9121b7-6348-43a2-9994-ac9289a6f364",
+      "name": "Information Embeddings",
+      "credentials": {
+        "openAiApi": {
+          "id": "nk6fvMvvBWByXKRs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: application_specialist\nÚsalo cuando el estudiante del ITT quiera consultar el estado actual de su trámite/proceso, saber en qué etapa va, qué requisitos o documentos tiene pendientes, o cuando proporcione su matrícula (número de control).",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & TONE\nYou are the **Process Tracking Specialist** of **TecBot (Instituto Tecnológico de Tijuana - ITT)**.\n- **Goal:** Inform the student about the current state of their administrative or academic process (trámite), their current stage, the responsible department, and any pending requirements or observations recorded by department staff.\n- **Tone:** Helpful, clear, institutional, and concise (1-4 sentences). Use the \"tú\" form.\n\n## LIVE STUDENT PROCESS CONTEXT\n- **Student Name:** {{ $('Get Applicant Status').first().json.applicant_name || null }}\n- **Matrícula (Número de Control):** {{ $('Get Applicant Status').first().json.matricula || null }}\n- **Process Type (Trámite):** {{ $('Get Applicant Status').first().json.process_type || null }}\n- **Responsible Department:** {{ $('Get Applicant Status').first().json.department || null }}\n- **Current Stage (Etapa):** {{ $('Get Applicant Status').first().json.current_stage_name || null }}\n- **Process Status:** {{ $('Get Applicant Status').first().json.status || null }}\n- **Observations / Pending Actions:** {{ $('Get Applicant Status').first().json.observations || null }}\n- **Current Date Time:** {{ $now }}\n\n## OPERATIONAL WORKFLOW\n\n### CASE 1: STUDENT HAS A REGISTERED PROCESS (`Process Status` is NOT null)\n- Clearly report to the student:\n  1. Their registered name and matrícula (`Matrícula`).\n  2. Which process (`Process Type`) they are doing and with which department (`Responsible Department`).\n  3. Their current stage (`Current Stage`) and status:\n     - `in_progress`: En proceso normal.\n     - `requires_revision`: Documentación o acción pendiente por parte del alumno.\n     - `approved` / `staff_approved`: Trámite finalizado / aprobado.\n     - `rejected` / `staff_rejected`: Trámite con observaciones o rechazado.\n     - `canceled`: Trámite cancelado.\n  4. **IMPORTANT:** If `Observations / Pending Actions` is not empty, explicitly highlight what document, requirement, or action they need to complete so their process can continue.\n\n### CASE 2: STUDENT IS NOT LINKED BY PHONE YET (`Process Status` is null or empty)\n- If the student included their **Matrícula / Número de Control** in their message (e.g., \"21211234\"):\n  - **ACTION:** Call the `get_restricted_colonies` (Lookup by Matrícula) tool to look up and link their matrícula with their WhatsApp number, and report the returned process status.\n- If the student has NOT provided their matrícula yet:\n  - Ask them kindly: \"No encuentro un trámite vinculado a este número de WhatsApp. Por favor indícame tu **Matrícula (Número de Control)** para buscar y vincular tu trámite en el sistema del ITT.\"\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        5648,
+        880
+      ],
+      "id": "530b536e-ced6-4855-bc63-5a24d855f132",
+      "name": "application_specialist"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: information_specialist\nÚsalo para responder dudas sobre información institucional del ITT (Servicio Social, Residencias, Servicios Escolares, horarios, requisitos de trámites en PDFs) y saludos generales.",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & MISSION\nYou are **TecBot**, the Institutional Information Assistant for students of the **Instituto Tecnológico de Tijuana (ITT)**.\n- **Goal:** Provide clear, accurate, and helpful answers to ITT students regarding academic and administrative processes based on official department PDF documents.\n- **Tone:** Friendly, institutional, respectful, and direct. Use the \"tú\" form.\n- **Language:** Natural Spanish (Mexico).\n\n## MANDATORY PROTOCOL (STRICT ORDER OF OPERATIONS)\nYou CANNOT invent institutional rules. You MUST follow these steps in order:\n\n**STEP 1: CONSULT THE INSTITUTIONAL KNOWLEDGE BASE (REQUIRED)**\n- Whenever the student asks ANY question about requirements, processes (Servicio Social, Residencias Profesionales, Titulación, Constancias, Credenciales, Seguro Facultativo), departments, or office hours:\n- **ACTION:** You MUST call the `knowledge_base` tool first to retrieve the official information extracted from the PDF documents uploaded by the ITT departments.\n\n**STEP 2: FORMULATE THE RESPONSE**\n- Read the documents returned by `knowledge_base`.\n- **IF DATA FOUND:** Base your response strictly on the official information from the department documents, mentioning which department manages it.\n- **IF NO DATA FOUND:** Do not invent requirements. Reply kindly: \"Por el momento no encuentro un documento oficial sobre ese tema en el sistema, te sugiero acudir directamente al departamento correspondiente o preguntar por el estado de tu trámite.\"\n\n## CONVERSATIONAL FLOW\n- **Greetings:** If the user just says \"Hola\" or \"Buenos días\", respond:\n  \"¡Hola! 👋 Soy **TecBot**, el asistente virtual del **Instituto Tecnológico de Tijuana** (*El ITT, conectado contigo*). Puedo resolver tus dudas sobre trámites y documentos institucionales o informarte el estado actual de tu proceso administrativo. ¿En qué te puedo ayudar hoy?\"\n- **Process Status Redirect:** If the user asks about their own active process status (\"¿cómo va mi trámite?\"), tell them they can consult their status or provide their matrícula (número de control).\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        6464,
+        880
+      ],
+      "id": "c8f6b673-c11c-4b22-8c1f-15763f187c72",
+      "name": "information_specialist"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        7008,
+        880
+      ],
+      "id": "d4246aba-4966-41c5-90a5-2028b703a1f4",
+      "name": "supervisor_calculator"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        6496,
+        1088
+      ],
+      "id": "19af3e1c-c566-43ec-9512-f1ed2820b1e0",
+      "name": "information_calculator"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: knowledge_base\nConsulta los documentos PDF institucionales cargados por los departamentos del Instituto Tecnológico de Tijuana (ITT), incluyendo requisitos de Servicio Social, Residencias Profesionales, Servicios Escolares, horarios y trámites.",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/documents",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        6624,
+        1088
+      ],
+      "id": "c208c883-848f-4054-bbc7-a6cfee082c2a",
+      "name": "knowledge_base"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        5600,
+        1088
+      ],
+      "id": "a052cfc2-0b51-4cf9-ba3a-291113c51640",
+      "name": "applicant_calculator"
+    },
+    {
+      "parameters": {
+        "description": "NAME: start_process\n\nInitializes a new application record in the database",
+        "workflowId": {
+          "__rl": true,
+          "value": "rTL9rwMglDF4wF9N",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rTL9rwMglDF4wF9N",
+          "cachedResultName": "Start Application"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "api_url": "={{ $('Normalize Data').first().json.api.url }}",
+            "message_chat_id": "={{ $('Normalize Data').first().json.message.chat_id }}",
+            "conversation_id": "={{ $('Get Conversation Status').first().json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "api_url",
+              "displayName": "api_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "message_chat_id",
+              "displayName": "message_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5728,
+        1088
+      ],
+      "id": "3be270c8-f9ce-47cb-9ff3-c9accf89bfc2",
+      "name": "start_process"
+    },
+    {
+      "parameters": {
+        "description": "NAME: enviar_pregunta\n\nCall this when you have a definitive user response to the current question. Use this to mark the answer as Valid, Not Valid (rejected), or requiring Supervision",
+        "workflowId": {
+          "__rl": true,
+          "value": "QTMI7bY8G4Pk5Zh0",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/QTMI7bY8G4Pk5Zh0",
+          "cachedResultName": "Send Answer"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "api_url": "={{ $('Normalize Data').first().json.api.url }}",
+            "message_chat_id": "={{ $('Normalize Data').first().json.message.chat_id }}",
+            "user_response": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('user_response', `The clean, direct and definitive answer inferred from the conversation in Spanish`, 'string') }}",
+            "decision": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('decision', `The verdict based on comparing the user's answer to the approval_criteria, it can be: \"valid\", \"not_valid\", or \"requires_supervision\"`, 'string') }}",
+            "reason": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reason', `A brief internal explanation for the admin justifying the decision without technical details, and in Spanish`, 'string') }}",
+            "conversation_id": "={{ $('Get Conversation Status').first().json.id }}",
+            "process_id": "={{ $('Get Conversation Status').first().json.process_id }}",
+            "conversation_history": "={{ $('Merge Message History').first().json.data }}",
+            "status": "={{ $('Get Applicant Status').first().json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_chat_id",
+              "displayName": "message_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "api_url",
+              "displayName": "api_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "current_question_question_id",
+              "displayName": "current_question_question_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "user_response",
+              "displayName": "user_response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "decision",
+              "displayName": "decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "process_id",
+              "displayName": "process_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_history",
+              "displayName": "conversation_history",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        5856,
+        1088
+      ],
+      "id": "b706c17d-1cf4-4f83-a61e-0b8d15ecee04",
+      "name": "enviar_pregunta"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        7136,
+        880
+      ],
+      "id": "a14aed20-29bc-44c2-8e8c-e06fb6df0c8a",
+      "name": "supervisor_think"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        8336,
+        656
+      ],
+      "id": "de363cad-7ddc-4cdb-9e24-dea072e127d8",
+      "name": "Loop Over Messages1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        8560,
+        464
+      ],
+      "id": "359799ac-ed66-4df2-a977-771ecd36da67",
+      "name": "Finish Workflow1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output.split(/\\n[\\s\\t]*\\n+/g);\n\nreturn text.map(messagePart => ({\n  json: {\n    output: messagePart.trim()\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8112,
+        656
+      ],
+      "id": "aab9e6cc-6a04-40d9-a95c-dcaf0ad8eeab",
+      "name": "Split Message1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/messages",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation_id",
+              "value": "={{ $('Get Conversation Status').first().json.id }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $('Normalize Data').first().json.message.chat_id }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.output }}"
+            },
+            {
+              "name": "role",
+              "value": "assistant"
+            },
+            {
+              "name": "name",
+              "value": "={{ $('Normalize Data').first().json.user.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8560,
+        656
+      ],
+      "id": "e693e537-377e-4521-9e2b-afdf47ed20f2",
+      "name": "Post Bot Message1"
+    },
+    {
+      "parameters": {
+        "amount": 0.1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        9008,
+        720
+      ],
+      "id": "c6888637-a5ce-4839-822c-97d32af90dc1",
+      "name": "Wait for Next Message1",
+      "webhookId": "0f863d71-72e5-4c9e-91ad-1119e2946a33"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        5984,
+        1088
+      ],
+      "id": "90445e56-5b7b-4e89-b2bd-cf0760d756d8",
+      "name": "application_think"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.instance.server_url }}/message/sendText/{{ $('Normalize Data').first().json.instance.name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $('Normalize Data').first().json.instance.apikey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Normalize Data').first().json.message.chat_id }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Loop Over Messages1').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8784,
+        656
+      ],
+      "id": "76462700-148b-425f-8b26-5f8449520c13",
+      "name": "Send message",
+      "webhookId": "8ae89eb6-2a4f-4a60-9b0f-15f98597bbb4",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "httpMethod": [
+          "POST",
+          "GET"
+        ],
+        "path": "hoh",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        720
+      ],
+      "id": "d33d698c-aecb-47eb-9bfd-d6f2f65d6788",
+      "name": "Message Webhook",
+      "webhookId": "12d3a40d-a2f4-42cc-af93-d238aba46f0c"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] ?? 'hola' }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -32,
+        624
+      ],
+      "id": "7bba8b8c-a4cc-4de8-a711-91cb6745c0af",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: get_restricted_colonies\nBusca y vincula el trámite de un estudiante del ITT utilizando su Matrícula (Número de Control) cuando aún no está vinculado a su número de WhatsApp.",
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/applicants/lookup",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "matricula",
+              "value": "={{ $fromAI('matricula', 'Matrícula o número de control proporcionado por el estudiante', 'string') }}"
+            },
+            {
+              "name": "chat_id",
+              "value": "={{ $('Normalize Data').first().json.message.chat_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        6112,
+        1088
+      ],
+      "id": "0d5344a4-5968-4d32-ae77-e7d3d841a2e5",
+      "name": "get_restricted_colonies"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5520,
+        880
+      ],
+      "id": "d5c48cda-8f81-4414-b330-fa95566ef18b",
+      "name": "Supervisor Fallback",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5472,
+        1088
+      ],
+      "id": "baae01aa-130e-4bfe-9d2c-1be8234fab69",
+      "name": "Applicant Fallback",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6368,
+        1088
+      ],
+      "id": "996477af-360c-4e4b-8732-5a90fa5010bb",
+      "name": "Information Fallback",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        6912,
+        1088
+      ],
+      "id": "c0c8e6e7-85c5-4c92-a381-2ef896d93564",
+      "name": "information_think"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "loader": "pdfLoader",
+        "options": {}
+      },
+      "id": "ca89785d-d35e-4828-9ec7-49d658b62482",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        176,
+        -816
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 50,
+        "options": {
+          "splitCode": "markdown"
+        }
+      },
+      "id": "146914d9-f213-44c2-8965-577180631264",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        256,
+        -608
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": []
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "default"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        5120,
+        624
+      ],
+      "id": "d973f4cd-951e-44bd-a65e-c62144a4d8e9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54dff93b-c0c4-4a6a-8330-973cc4197e37",
+              "name": "output",
+              "value": "Lo sentimos, estamos teniendo problemas tecnicos, por favor mandanos mensaje mas tarde!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7888,
+        752
+      ],
+      "id": "62115113-9b7e-4462-8b2a-6b1c1995c4ec",
+      "name": "Error Message"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        7040,
+        1088
+      ],
+      "id": "2ad6c2ca-f191-4659-8d21-5446790b7e54",
+      "name": "Reschedule Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        7168,
+        1088
+      ],
+      "id": "7f54d9cb-c064-4f9a-a290-8c60a0733570",
+      "name": "Reschedule Fallback",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        7296,
+        1088
+      ],
+      "id": "9c9ee043-3c54-497d-821e-750d405d0315",
+      "name": "reschedule_calculator"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        7424,
+        1088
+      ],
+      "id": "dbb04b26-fe87-452e-a3e3-118060d3c31a",
+      "name": "reschedule_think"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        7552,
+        1088
+      ],
+      "id": "c80d4e60-1793-4647-ade0-59fadec44662",
+      "name": "reschedule_datetime"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: leave_group\nExecutes the removal of the user from their current group. Call this ONLY after the user has explicitly confirmed they want to leave",
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/reschedule/{{ $('Get Conversation Status').first().json.chat_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        7680,
+        1088
+      ],
+      "id": "80ccf9fe-b712-4a52-99e3-847386d29acc",
+      "name": "leave_group"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: rescheduling_specialist\n\nCall this tool when the user states they cannot attend their scheduled date, want to change their group, or want to cancel their attendance.",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & ROLE\nYou are the Rescheduling Assistant for Casas de Esperanza.\nYour ONLY job is to manage group cancellations and date changes. Use the \"tú\" form.\n\n## LIVE CONTEXT\n- Current Process Status: {{ $('Get Applicant Status').last().json.status || 'NULL' }}\n\n## MANDATORY WORKFLOW (Follow Strictly)\n\n**STEP 1: THE GATEKEEPER (Status Check)**\nCheck the `Current Process Status`.\n- IF status is NOT \"approved\" OR NOT \"staff_approved\":\n  - **ACTION:** DO NOT ask for confirmation. DO NOT call tools.\n  - **RESPOND:** \"Actualmente tu solicitud no está aprobada. En cuanto una persona cheque tu solicitud te avisaremos para seleciconar tu entrevista!\" (Stop here).\n- IF status IS \"confirmed\": Proceed to Step 2.\n\n**STEP 2: THE CONFIRMATION LOOP**\nIf the user says they want to cancel or change, you MUST ask for explicit confirmation before executing.\n- **RESPOND:** \"Para hacer esto te enviaremos un nuevo enlace para elegir tu fecha. Si tienes un lugar reservado, lo perderás. ¿Confirmas que deseas continuar?\"\n- **WAIT:** Do NOT call any tools. Wait for the user to say \"Sí\" or \"No\".\n- If the user replies \"No\" or backs out: \n  - **RESPOND:** \"Perfecto! No hay problema, no haré ningún cambio. Tu lugar queda tal como está 😊 ¿Necesitas algo más?\"\n\n**STEP 3: EXECUTION (After \"Yes\")**\nIf the user explicitly confirms (e.g., \"Sí\", \"Estoy seguro\"):\n- **ACTION:** Call the `leave_group` tool IMMEDIATELY.\n- **RESPOND:** Output the exact response returned by the tool. If the tool returns nothing, say: \"Listo, te he sacado del grupo. En unos momentos recibirás un mensaje con el enlace para que elijas una nueva fecha.\"",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        7328,
+        880
+      ],
+      "id": "3a15ab39-cbda-448c-989b-f33cef22f540",
+      "name": "rescheduling_specialist"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "455b7063-0948-4cd0-80b3-a9202752983f",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "[SILENT_EXIT]",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        7888,
+        560
+      ],
+      "id": "0d4a916c-86da-40f2-972e-384510534095",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        -1472
+      ],
+      "id": "33df2f94-53a6-443e-aeb8-0b568f600bb7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        5328,
+        416
+      ],
+      "id": "a742053f-9539-4a1e-8eb1-306670eaebe1",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5483f7bb-081e-4d24-ac93-00491a489120",
+              "leftValue": "={{ $('Get Conversation Status').item.json.chat_id }}",
+              "rightValue": "5216611163915",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5712,
+        480
+      ],
+      "id": "6aea5741-88db-4619-86e6-91ba402175a1",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## ROLE & OBJECTIVE\nYou are the **Traffic Controller** for **TecBot (\"El ITT, conectado contigo\")**, the virtual assistant of the **Instituto Tecnológico de Tijuana (ITT)**.\nYour ONLY goal is to route the student to the right specialist tool, WAIT for their text response, and **OUTPUT that exact text** as your final answer to the student.\n\n## YOUR 2-STEP PROTOCOL (MUST FOLLOW)\n\n### STEP 1: ROUTE & EXECUTE\nAnalyze the `user_message` and student process context:\n- IF the student asks about the status of their personal process/trámite (\"¿Cómo va mi trámite?\", \"¿Cuál es mi estado?\", \"¿Qué me falta entregar?\", \"Mi número de control / matrícula es...\") -> Call `application_specialist`.\n- IF the student asks for general or institutional information (\"¿Cuáles son los requisitos de servicio social?\", \"¿Dónde está Servicios Escolares?\", \"Horarios\", \"Residencias profesionales\", greetings like \"Hola\") -> Call `information_specialist`.\n\n### STEP 2: PASSTHROUGH (The \"Finisher\")\n**CRITICAL:** Once the specialist tool returns a text message:\n1. **STOP THINKING.**\n2. **YOUR FINAL RESPONSE** must be that **exact text**.\n3. **THE SILENCE EXCEPTION:** If the specialist tool returns EXACTLY \"[SILENT_EXIT]\", output EXACTLY \"[SILENT_EXIT]\".\n4. **DO NOT** add introductions like \"The specialist says...\". Just output the raw message.\n5. **DO NOT** call the tool again.\n\n## INPUT VARIABLES (STUDENT CONTEXT)\n- **Student Name:** {{ $('Get Applicant Status').first().json.applicant_name || 'No registrado' }}\n- **Matrícula (Número de Control):** {{ $('Get Applicant Status').first().json.matricula || 'No vinculada' }}\n- **Process Type (Trámite):** {{ $('Get Applicant Status').first().json.process_type || 'Ninguno' }}\n- **Department:** {{ $('Get Applicant Status').first().json.department || 'N/A' }}\n- **Current Stage:** {{ $('Get Applicant Status').first().json.current_stage_name || 'N/A' }}\n- **Status:** {{ $('Get Applicant Status').first().json.status || 'NULL' }}\n- **Observations / Pending Actions:** {{ $('Get Applicant Status').first().json.observations || 'Ninguna' }}\n- **Current Date Time:** {{ $now }}\n",
+          "maxIterations": 3,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        6704,
+        -256
+      ],
+      "id": "b017947d-0a3e-4ec5-b3bc-af22c407e2d1",
+      "name": "Supervisor1",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5664,
+        -32
+      ],
+      "id": "1c7c1b81-1b64-40ef-89f7-bf24de947887",
+      "name": "Supervisor Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5616,
+        176
+      ],
+      "id": "cfaa6052-aaf0-4a94-b082-6a3d68c8dabb",
+      "name": "Applicant Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6512,
+        176
+      ],
+      "id": "4e006684-640f-4bd8-8f62-0f0c096f3511",
+      "name": "Information Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6976,
+        384
+      ],
+      "id": "4e96f281-6017-4238-b8a8-d9881c090a64",
+      "name": "Information Embeddings1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nk6fvMvvBWByXKRs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: application_specialist\nÚsalo cuando el estudiante del ITT quiera consultar el estado actual de su trámite/proceso, saber en qué etapa va, qué requisitos o documentos tiene pendientes, o cuando proporcione su matrícula (número de control).",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & TONE\nYou are the **Process Tracking Specialist** of **TecBot (Instituto Tecnológico de Tijuana - ITT)**.\n- **Goal:** Inform the student about the current state of their administrative or academic process (trámite), their current stage, the responsible department, and any pending requirements or observations recorded by department staff.\n- **Tone:** Helpful, clear, institutional, and concise (1-4 sentences). Use the \"tú\" form.\n\n## LIVE STUDENT PROCESS CONTEXT\n- **Student Name:** {{ $('Get Applicant Status').first().json.applicant_name || null }}\n- **Matrícula (Número de Control):** {{ $('Get Applicant Status').first().json.matricula || null }}\n- **Process Type (Trámite):** {{ $('Get Applicant Status').first().json.process_type || null }}\n- **Responsible Department:** {{ $('Get Applicant Status').first().json.department || null }}\n- **Current Stage (Etapa):** {{ $('Get Applicant Status').first().json.current_stage_name || null }}\n- **Process Status:** {{ $('Get Applicant Status').first().json.status || null }}\n- **Observations / Pending Actions:** {{ $('Get Applicant Status').first().json.observations || null }}\n- **Current Date Time:** {{ $now }}\n\n## OPERATIONAL WORKFLOW\n\n### CASE 1: STUDENT HAS A REGISTERED PROCESS (`Process Status` is NOT null)\n- Clearly report to the student:\n  1. Their registered name and matrícula (`Matrícula`).\n  2. Which process (`Process Type`) they are doing and with which department (`Responsible Department`).\n  3. Their current stage (`Current Stage`) and status:\n     - `in_progress`: En proceso normal.\n     - `requires_revision`: Documentación o acción pendiente por parte del alumno.\n     - `approved` / `staff_approved`: Trámite finalizado / aprobado.\n     - `rejected` / `staff_rejected`: Trámite con observaciones o rechazado.\n     - `canceled`: Trámite cancelado.\n  4. **IMPORTANT:** If `Observations / Pending Actions` is not empty, explicitly highlight what document, requirement, or action they need to complete so their process can continue.\n\n### CASE 2: STUDENT IS NOT LINKED BY PHONE YET (`Process Status` is null or empty)\n- If the student included their **Matrícula / Número de Control** in their message (e.g., \"21211234\"):\n  - **ACTION:** Call the `get_restricted_colonies` (Lookup by Matrícula) tool to look up and link their matrícula with their WhatsApp number, and report the returned process status.\n- If the student has NOT provided their matrícula yet:\n  - Ask them kindly: \"No encuentro un trámite vinculado a este número de WhatsApp. Por favor indícame tu **Matrícula (Número de Control)** para buscar y vincular tu trámite en el sistema del ITT.\"\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        5920,
+        -32
+      ],
+      "id": "eee9e393-9ee1-402d-bdda-c92274396b2f",
+      "name": "application_specialist1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: information_specialist\nÚsalo para responder dudas sobre información institucional del ITT (Servicio Social, Residencias, Servicios Escolares, horarios, requisitos de trámites en PDFs) y saludos generales.",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & MISSION\nYou are **TecBot**, the Institutional Information Assistant for students of the **Instituto Tecnológico de Tijuana (ITT)**.\n- **Goal:** Provide clear, accurate, and helpful answers to ITT students regarding academic and administrative processes based on official department PDF documents.\n- **Tone:** Friendly, institutional, respectful, and direct. Use the \"tú\" form.\n- **Language:** Natural Spanish (Mexico).\n\n## MANDATORY PROTOCOL (STRICT ORDER OF OPERATIONS)\nYou CANNOT invent institutional rules. You MUST follow these steps in order:\n\n**STEP 1: CONSULT THE INSTITUTIONAL KNOWLEDGE BASE (REQUIRED)**\n- Whenever the student asks ANY question about requirements, processes (Servicio Social, Residencias Profesionales, Titulación, Constancias, Credenciales, Seguro Facultativo), departments, or office hours:\n- **ACTION:** You MUST call the `knowledge_base` tool first to retrieve the official information extracted from the PDF documents uploaded by the ITT departments.\n\n**STEP 2: FORMULATE THE RESPONSE**\n- Read the documents returned by `knowledge_base`.\n- **IF DATA FOUND:** Base your response strictly on the official information from the department documents, mentioning which department manages it.\n- **IF NO DATA FOUND:** Do not invent requirements. Reply kindly: \"Por el momento no encuentro un documento oficial sobre ese tema en el sistema, te sugiero acudir directamente al departamento correspondiente o preguntar por el estado de tu trámite.\"\n\n## CONVERSATIONAL FLOW\n- **Greetings:** If the user just says \"Hola\" or \"Buenos días\", respond:\n  \"¡Hola! 👋 Soy **TecBot**, el asistente virtual del **Instituto Tecnológico de Tijuana** (*El ITT, conectado contigo*). Puedo resolver tus dudas sobre trámites y documentos institucionales o informarte el estado actual de tu proceso administrativo. ¿En qué te puedo ayudar hoy?\"\n- **Process Status Redirect:** If the user asks about their own active process status (\"¿cómo va mi trámite?\"), tell them they can consult their status or provide their matrícula (número de control).\n",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        6736,
+        -32
+      ],
+      "id": "a94369ef-e82a-4588-b67b-4a04b295343f",
+      "name": "information_specialist1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        7280,
+        -32
+      ],
+      "id": "49a1e4b5-1400-44c7-913c-06234937ef33",
+      "name": "supervisor_calculator1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        6768,
+        176
+      ],
+      "id": "7e51babb-4700-4fff-9cee-2ab846f0d1e5",
+      "name": "information_calculator1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: knowledge_base\nConsulta los documentos PDF institucionales cargados por los departamentos del Instituto Tecnológico de Tijuana (ITT), incluyendo requisitos de Servicio Social, Residencias Profesionales, Servicios Escolares, horarios y trámites.",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/documents",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        6896,
+        176
+      ],
+      "id": "100f3e2e-31f1-4572-b3c0-74f7da2361fd",
+      "name": "knowledge_base1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        5872,
+        176
+      ],
+      "id": "3c296627-f453-444a-869d-64780b26d289",
+      "name": "applicant_calculator1"
+    },
+    {
+      "parameters": {
+        "description": "NAME: start_process\n\nInitializes a new application record in the database",
+        "workflowId": {
+          "__rl": true,
+          "value": "rTL9rwMglDF4wF9N",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/rTL9rwMglDF4wF9N",
+          "cachedResultName": "Start Application"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "api_url": "={{ $('Normalize Data').first().json.api.url }}",
+            "message_chat_id": "={{ $('Normalize Data').first().json.message.chat_id }}",
+            "conversation_id": "={{ $('Get Conversation Status').first().json.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "api_url",
+              "displayName": "api_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "message_chat_id",
+              "displayName": "message_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        6000,
+        176
+      ],
+      "id": "46cc64bb-68dd-450d-a889-4d9d476c752a",
+      "name": "start_process1"
+    },
+    {
+      "parameters": {
+        "description": "NAME: enviar_pregunta\n\nCall this when you have a definitive user response to the current question. Use this to mark the answer as Valid, Not Valid (rejected), or requiring Supervision",
+        "workflowId": {
+          "__rl": true,
+          "value": "QTMI7bY8G4Pk5Zh0",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/QTMI7bY8G4Pk5Zh0",
+          "cachedResultName": "Send Answer"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "api_url": "={{ $('Normalize Data').first().json.api.url }}",
+            "message_chat_id": "={{ $('Normalize Data').first().json.message.chat_id }}",
+            "user_response": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('user_response', `The clean, direct and definitive answer inferred from the conversation in Spanish`, 'string') }}",
+            "decision": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('decision', `The verdict based on comparing the user's answer to the approval_criteria, it can be: \"valid\", \"not_valid\", or \"requires_supervision\"`, 'string') }}",
+            "reason": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reason', `A brief internal explanation for the admin justifying the decision without technical details, and in Spanish`, 'string') }}",
+            "conversation_id": "={{ $('Get Conversation Status').first().json.id }}",
+            "process_id": "={{ $('Get Conversation Status').first().json.process_id }}",
+            "conversation_history": "={{ $('Merge Message History').first().json.data }}",
+            "status": "={{ $('Get Applicant Status').first().json.status }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_chat_id",
+              "displayName": "message_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "api_url",
+              "displayName": "api_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "current_question_question_id",
+              "displayName": "current_question_question_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "user_response",
+              "displayName": "user_response",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "decision",
+              "displayName": "decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "process_id",
+              "displayName": "process_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "conversation_history",
+              "displayName": "conversation_history",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        6128,
+        176
+      ],
+      "id": "7d2d3b39-0fe6-4063-9932-2596ad6c8582",
+      "name": "enviar_pregunta1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        7408,
+        -32
+      ],
+      "id": "cf4270dd-b58a-48c5-8794-818a3894301e",
+      "name": "supervisor_think1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        6256,
+        176
+      ],
+      "id": "cbadca3b-33af-466c-a3e5-d80321cbbbd5",
+      "name": "application_think1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: get_restricted_colonies\nBusca y vincula el trámite de un estudiante del ITT utilizando su Matrícula (Número de Control) cuando aún no está vinculado a su número de WhatsApp.",
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/applicants/lookup",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "matricula",
+              "value": "={{ $fromAI('matricula', 'Matrícula o número de control proporcionado por el estudiante', 'string') }}"
+            },
+            {
+              "name": "chat_id",
+              "value": "={{ $('Normalize Data').first().json.message.chat_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        6384,
+        176
+      ],
+      "id": "9c4c70ad-d7b0-425c-8bbd-55e6e405dd00",
+      "name": "get_restricted_colonies1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5792,
+        -32
+      ],
+      "id": "f7d310a1-559b-4cc3-bc01-ef4a565e2dea",
+      "name": "Supervisor Fallback1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        5744,
+        176
+      ],
+      "id": "138c1c1e-60cb-42a1-a54f-b3409f9bb9fa",
+      "name": "Applicant Fallback1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        6640,
+        176
+      ],
+      "id": "7089d4c4-766d-4974-9fd3-2f3fc34e3510",
+      "name": "Information Fallback1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        7184,
+        176
+      ],
+      "id": "ab7b8bec-6dc0-40d3-8551-83bf409abed4",
+      "name": "information_think1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        7312,
+        176
+      ],
+      "id": "aac2d1c4-35f4-4664-bcfe-9503343cb4d3",
+      "name": "Reschedule Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-large-4-1t-a52b",
+          "mode": "id"
+        },
+        "options": {
+          "baseURL": "https://integrate.api.nvidia.com/v1",
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        7440,
+        176
+      ],
+      "id": "d5efb165-cfe3-43c6-ae4d-30193f72896d",
+      "name": "Reschedule Fallback1",
+      "credentials": {
+        "openAiApi": {
+          "id": "nvidiaNimCredId",
+          "name": "NVIDIA NIM API (integrate.api.nvidia.com/v1)"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        7568,
+        176
+      ],
+      "id": "6cb77fea-ea57-4ff0-8a16-896281fa6012",
+      "name": "reschedule_calculator1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        7696,
+        176
+      ],
+      "id": "ecb9ee94-7e74-4564-9cee-18a5f7ceffd4",
+      "name": "reschedule_think1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        7824,
+        176
+      ],
+      "id": "2b344abc-133b-4c38-b4e8-9ca030577a20",
+      "name": "reschedule_datetime1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: leave_group\nExecutes the removal of the user from their current group. Call this ONLY after the user has explicitly confirmed they want to leave",
+        "method": "POST",
+        "url": "={{ $('Normalize Data').first().json.api.url }}/reschedule/{{ $('Get Conversation Status').first().json.chat_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        7952,
+        176
+      ],
+      "id": "00b681f7-9b9e-4d26-a14a-67719e96fb6a",
+      "name": "leave_group1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "NAME: rescheduling_specialist\n\nCall this tool when the user states they cannot attend their scheduled date, want to change their group, or want to cancel their attendance.",
+        "text": "=CONVERSATION HISTORY:\n{{ $('Merge Message History').first().json.data.map((msg) => `${msg.role}: ${msg.message}`).join('\\n') }}\n\nUSER'S LAST MESSAGE:\n{{ $('Normalize Data').first().json.message.content }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=## IDENTITY & MISSION\nYou are the \"Information Assistant\" for the Casas de Esperanza team.\n- **Goal:** Provide warm, clear, and supportive answers to families interested in the housing program.\n- **Tone:** Empathetic, respectful, reassuring, and direct. Use the \"tú\" form.\n- **Language:** Natural, human-sounding Spanish (Mexico).\n- **Core Rule:** You are a read-only assistant. You DO NOT take applications. You only answer questions.\n\n## LIVE CONTEXT\n- **Applicant Name:** {{ $('Get Current Question1').first().json.applicant_name || null }}\n- **Status:** {{ $('Get Applicant Status').first().json.status || null }}\n- **Current Date Time:** {{ $now }}\n\n## MANDATORY PROTOCOL (STRICT ORDER OF OPERATIONS)\nYou CANNOT answer any question using your internal knowledge. You MUST follow these steps in order:\n\n**STEP 1: CONSULT THE KNOWLEDGE BASE (REQUIRED)**\n- If the user asks ANY question about requirements, locations, documents, processes, or Casas de Esperanza in general.\n- **ACTION:** You MUST call the `knowledge_base` tool with a relevant search query BEFORE generating your text response.\n- **FORBIDDEN:** Do not attempt to guess or answer without calling the tool first.\n\n**STEP 2: FORMULATE THE RESPONSE**\n- Read the results from the `knowledge_base`.\n- **IF DATA FOUND:** Base your entire response ONLY on the facts provided by the tool.\n- **IF NO DATA FOUND:** Do not invent facts. Reply kindly: \"No tengo esa información a la mano, pero puedo ayudarte con tu proceso de aplicacion\"\n\n## OPERATIONAL GUIDELINES\n\n### 0. APPROVED USER RULES (HIGHEST PRIORITY — CHECK FIRST)\n- **Trigger:** `Status` is 'approved' OR 'staff_approved'.\n- **You MUST follow this section instead of sections 1 and 3 below.**\n- **GREETING:** If the user greets you or sends a message with no specific intent, respond exactly like this (replace {{name}} with the Applicant Name, or use a warm greeting without a name if it's null):\n  - \"¡Hola {{name}}! Tu solicitud ya fue aprobada 🙌. Revisa el mensaje con tu liga para elegir tu grupo. ¿Tienes alguna duda sobre el proceso o la colonia?\"\n- **IF THE USER ASKS ABOUT APPLYING** (e.g., \"quiero aplicar\", \"¿cómo aplico?\", \"quiero empezar mi solicitud\"):\n  - Reply: \"¡Tu solicitud ya fue aprobada! 🙌 No necesitas aplicar de nuevo. Revisa el mensaje con tu liga para elegir tu grupo.\"\n- **FORBIDDEN for approved users:**\n  - NEVER suggest writing \"Quiero aplicar\" or starting a new application.\n  - NEVER ask for personal data (names, CURP, addresses, phone numbers) or redirect them to give it.\n  - NEVER use the standard greeting \"¿Te gustaría conocer los requisitos para aplicar?\".\n  - NEVER say or imply that their application is pending, missing, or still needs to be started.\n- **ALLOWED:** Answer any general question (requirements, colonias, documents, hours, how the program works) following STEP 1 above, and acknowledge their approved status warmly.\n\n### 1. THE \"NO DATA\" RULE (Privacy)\n- **Absolute Privacy:** NEVER ask for names, addresses, CURPs, or phone numbers.\n- **Redirect:** If a user tries to give you their personal data, say: \"Para tomar tus datos, necesito que iniciemos el proceso formal. Por favor di: 'Quiero aplicar'.\"\n- **Exception:** If `Status` is 'approved' or 'staff_approved', do NOT redirect — instead reply: \"Tu solicitud ya está aprobada, no necesitas volver a darnos tus datos. 😊 ¿Tienes alguna duda?\"\n\n### 2. SPECIFIC SCENARIOS\n- **Colonias/Locations:** If asked \"Do you build in [Colonia]?\" or similar, search the knowledge base for that specific location.\n- **Documents:** If asked \"How do I get my CURP/Deeds?\", use general knowledge ONLY to guide them step-by-step (e.g., checking gob.mx/curp) after verifying our internal rules.\n- **Terminology:** Use \"proceso para aplicar\". Never use \"calificar\" or \"ser apto\".\n\n### 3. CONVERSATIONAL FLOW\n- **Greetings:** If the user just says \"Hola\" or \"Buenos días\" **and `Status` is NOT 'approved'/'staff_approved'**, do not search the knowledge base. Respond:\n  \"Hola, te comunicas con Casas de Esperanza. Somos un ministerio dedicado a brindar refugio a familias. 🏡 ¿Te gustaría conocer los requisitos para aplicar?\"\n- **Handoff:** If the user decides they want to apply after hearing the info **and `Status` is NOT 'approved'/'staff_approved'**, guide them clearly:\n  \"¡Excelente! Para comenzar tu solicitud, solo escribe: **'Quiero aplicar'**.\"\n\n## RESPONSE STYLE\n- Keep answers brief (1-3 sentences).\n- Use emojis sparingly to add warmth (🏡, 🙌).\n- Do not start every message with \"Hola\". Respond directly to the question.",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        7600,
+        -32
+      ],
+      "id": "15dba108-153b-4210-811e-3789a324fa68",
+      "name": "rescheduling_specialist1"
+    }
+  ],
+  "pinData": {
+    "Message Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.hopesystem.cloud",
+            "user-agent": "facebookexternalua",
+            "content-length": "603",
+            "accept": "*/*",
+            "accept-encoding": "deflate, gzip",
+            "content-type": "application/json",
+            "x-forwarded-for": "173.252.107.25",
+            "x-forwarded-host": "n8n.hopesystem.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "e92807a8df08",
+            "x-hub-signature": "sha1=e748172a9909ad43ff97299257b112254f357704",
+            "x-hub-signature-256": "sha256=f87b0d1fb1f5c3648137586ca46c83f8052571b7d889e84438a1ac08f8a3269a",
+            "x-real-ip": "173.252.107.25"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "object": "whatsapp_business_account",
+            "entry": [
+              {
+                "id": "906861525197966",
+                "changes": [
+                  {
+                    "value": {
+                      "messaging_product": "whatsapp",
+                      "metadata": {
+                        "display_phone_number": "15558415186",
+                        "phone_number_id": "899550083250113"
+                      },
+                      "contacts": [
+                        {
+                          "profile": {
+                            "name": "🤗🤗🤗"
+                          },
+                          "wa_id": "5216643050345",
+                          "user_id": "MX.1114221491128994"
+                        }
+                      ],
+                      "messages": [
+                        {
+                          "from": "5216643050345",
+                          "from_user_id": "MX.1114221491128994",
+                          "id": "wamid.HBgNNTIxNjY0MzA1MDM0NRUCABIYIEFDMzlDNzk1RDg5OEQ4MTAxRkZBMzA4QTI5RkNCOTMyAA==",
+                          "timestamp": "1790280350",
+                          "text": {
+                            "body": "Divina Providencia"
+                          },
+                          "type": "text"
+                        }
+                      ]
+                    },
+                    "field": "messages"
+                  }
+                ]
+              }
+            ]
+          },
+          "webhookUrl": "https://n8n.hopesystem.cloud/webhook/hoh",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Get Audio": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audio Content": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push Message Buffer": {
+      "main": [
+        [
+          {
+            "node": "Get Message Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Message Buffer": {
+      "main": [
+        [
+          {
+            "node": "Message Buffer Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Message Buffer": {
+      "main": [
+        [
+          {
+            "node": "Split Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "If New Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Buffer Switch": {
+      "main": [
+        [
+          {
+            "node": "Ignore the Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Message Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Message Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Messages": {
+      "main": [
+        [
+          {
+            "node": "Parse to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse to JSON": {
+      "main": [
+        [
+          {
+            "node": "Message Type Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Type Switch": {
+      "main": [
+        [
+          {
+            "node": "Get Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normal Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normal Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Supported Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Supported Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Supported Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normal Message": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Not Supported Message": {
+      "main": [
+        [
+          {
+            "node": "Merge Messages",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Messages": {
+      "main": [
+        [
+          {
+            "node": "Sort Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort Messages": {
+      "main": [
+        [
+          {
+            "node": "Get Conversation Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Messages": {
+      "main": [
+        [
+          {
+            "node": "Get Message History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post User Message": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Message History": {
+      "main": [
+        [
+          {
+            "node": "Merge Message History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Message History": {
+      "main": [
+        [
+          {
+            "node": "Get Applicant Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Conversation Status": {
+      "main": [
+        [
+          {
+            "node": "Post User Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Applicant Status": {
+      "main": [
+        [
+          {
+            "node": "Get Current Question1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If New Message": {
+      "main": [
+        [
+          {
+            "node": "Save Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Number": {
+      "main": [
+        [
+          {
+            "node": "Push Message Buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording1": {
+      "main": [
+        [
+          {
+            "node": "Audio Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Applicant Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Question1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "information_specialist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "application_specialist": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "information_specialist": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supervisor_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "information_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "knowledge_base": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "applicant_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "start_process": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enviar_pregunta": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supervisor_think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Messages1": {
+      "main": [
+        [
+          {
+            "node": "Finish Workflow1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post Bot Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Message1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Messages1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Bot Message1": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Next Message1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Messages1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "application_think": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        [
+          {
+            "node": "Wait for Next Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_restricted_colonies": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor Fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Applicant Fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "application_specialist",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Information Fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "information_specialist",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "information_think": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Message": {
+      "main": [
+        [
+          {
+            "node": "Split Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reschedule Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reschedule Fallback": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "reschedule_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reschedule_think": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reschedule_datetime": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "leave_group": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "rescheduling_specialist": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Split Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supervisor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Applicant Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "information_specialist1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "application_specialist1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "information_specialist1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supervisor_calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "information_calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "knowledge_base1": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "applicant_calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "start_process1": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "enviar_pregunta1": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "supervisor_think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "application_think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_restricted_colonies1": {
+      "ai_tool": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor Fallback1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Applicant Fallback1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "application_specialist1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Information Fallback1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "information_specialist1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "information_think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "information_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reschedule Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reschedule Fallback1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "reschedule_calculator1": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reschedule_think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reschedule_datetime1": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "leave_group1": {
+      "ai_tool": [
+        [
+          {
+            "node": "rescheduling_specialist1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "rescheduling_specialist1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Supervisor1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supervisor1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f2428b8e-de90-4c50-84b1-b8e4712a88bc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aebb4a7eb871d95ff886b7eeddf763fff48075502c444ba49d696d8c9b8b1f90"
+  },
+  "id": "apyblXth1qXqYqR7",
+  "tags": []
+}
